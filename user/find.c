@@ -2,6 +2,32 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 #include "kernel/fs.h"
+#include "kernel/param.h"
+
+char *exec_argv[MAXARG];
+int exec_argc = 0;
+
+void
+run_exec(char *matched_path)
+{
+  int i;
+  char *argv[MAXARG];
+
+  for (i = 0; i < exec_argc; i++) {
+    argv[i] = exec_argv[i];
+  }
+  argv[i] = matched_path;
+  argv[i + 1] = 0;
+
+  int pid = fork();
+  if (pid == 0) {
+    exec(argv[0], argv);
+    fprintf(2, "find: exec %s failed\n", argv[0]);
+    exit(1);
+  } else {
+    wait(0);
+  }
+}
 
 void
 find(char *path, char *target)
@@ -52,7 +78,11 @@ find(char *path, char *target)
     }
 
     if (strcmp(de.name, target) == 0) {
-      printf("%s\n", buf);
+      if (exec_argc > 0) {
+        run_exec(buf);
+      } else {
+        printf("%s\n", buf);
+      }
     }
 
     if (st.type == T_DIR) {
@@ -66,9 +96,19 @@ find(char *path, char *target)
 int
 main(int argc, char *argv[])
 {
-  if (argc != 3) {
-    fprintf(2, "Usage: find directory filename\n");
+  if (argc < 3) {
+    fprintf(2, "Usage: find directory filename [-exec cmd ...]\n");
     exit(1);
+  }
+
+  if (argc > 3) {
+    if (strcmp(argv[3], "-exec") != 0) {
+      fprintf(2, "Usage: find directory filename [-exec cmd ...]\n");
+      exit(1);
+    }
+    for (int i = 4; i < argc; i++) {
+      exec_argv[exec_argc++] = argv[i];
+    }
   }
 
   find(argv[1], argv[2]);
