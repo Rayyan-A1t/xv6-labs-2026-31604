@@ -124,7 +124,6 @@ runcmd(struct cmd *cmd)
 
   case BACK:
     bcmd = (struct backcmd *)cmd;
-    if (fork1() == 0)
       runcmd(bcmd->cmd);
     break;
   }
@@ -163,15 +162,22 @@ main(void)
       cmd++;
     if (*cmd == '\n') // is a blank command
       continue;
+    if (strcmp(cmd, "wait\n") == 0) {
+      while (wait(0) != -1)
+        ;
+      continue;
+    }
     if (cmd[0] == 'c' && cmd[1] == 'd' && cmd[2] == ' ') {
       // Chdir must be called by the parent, not the child.
       cmd[strlen(cmd) - 1] = 0; // chop \n
       if (chdir(cmd + 3) < 0)
         fprintf(2, "cannot cd %s\n", cmd + 3);
-    } else {
+    }else {
+      int bg = (cmd[strlen(cmd)-2] == '&');
       if (fork1() == 0)
         runcmd(parsecmd(cmd));
-      wait(0);
+      if (!bg)
+        wait(0);
     }
   }
   exit(0);
