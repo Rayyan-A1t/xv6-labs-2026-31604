@@ -145,7 +145,8 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
+  p->mask = 0;
+  p->sandbox_path[0] = 0;
   return p;
 }
 
@@ -274,6 +275,8 @@ kfork(void)
     return -1;
   }
   np->sz = p->sz;
+  np->mask = p->mask;
+  safestrcpy(np->sandbox_path, p->sandbox_path, sizeof(p->sandbox_path));
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
