@@ -1,0 +1,5 @@
+Syscall number: 5 (SYS_read)
+Process name: sh
+
+When hitting the breakpoint at syscall(), register $a7 held the value 5, 
+which corresponds to SYS_read in kernel/syscall.h. The process making the system call was "sh".
