@@ -206,7 +206,7 @@ UPROGS=\
 	$U/_sandbox\
 	$U/_sbtest\
 	$U/_attack\
-
+	$U/_exercise2_9\
 
 
 ifeq ($(LAB),syscall)

@@ -128,3 +128,8 @@ sys_interpose(void)
   safestrcpy(p->sandbox_path, path, MAXPATH);
   return 0;
 }
+uint64
+sys_freemem(void)
+{
+  return freemem();
+}
