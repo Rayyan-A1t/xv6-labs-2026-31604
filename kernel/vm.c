@@ -147,15 +147,6 @@ walkaddr(pagetable_t pagetable, uint64 va)
 }
 
 
-#if defined(LAB_PGTBL) || defined(SOL_MMAP) || defined(SOL_COW)
-void
-vmprint(pagetable_t pagetable)
-{
-  // your code here
-}
-#endif
-
-
 // add a mapping to the kernel page table.
 // only used when booting.
 // does not flush TLB or enable paging.
@@ -538,3 +529,38 @@ ismapped(pagetable_t pagetable, uint64 va)
 }
 
 
+void
+vmprint_walk(pagetable_t pagetable, int level, uint64 va_prefix)
+{
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if(pte & PTE_V){
+      uint64 pa = PTE2PA(pte);
+      uint64 va = va_prefix;
+
+      if(level == 2) va |= ((uint64)i << 30);
+      else if(level == 1) va |= ((uint64)i << 21);
+      else if(level == 0) va |= ((uint64)i << 12);
+
+      if(level == 2) printk(" ..");
+      else if(level == 1) printk(" .. ..");
+      else if(level == 0) printk(" .. .. ..");
+
+      printk("%p: pte %p pa %p", (void*)va, (void*)pte, (void*)pa);
+
+      if(pte & (PTE_R | PTE_W | PTE_X)){
+        printk("\n");
+      } else {
+        printk("\n");
+        vmprint_walk((pagetable_t)pa, level - 1, va);
+      }
+    }
+  }
+}
+
+void
+vmprint(pagetable_t pagetable)
+{
+  printk("page table %p\n", (void*)pagetable);
+  vmprint_walk(pagetable, 2, 0);
+}
