@@ -157,6 +157,21 @@ kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
     panic("kvmmap");
 }
 
+// Return the level-1 PTE for va, allocating the level-2 entry if needed.
+static pte_t *
+walk2mb(pagetable_t pagetable, uint64 va)
+{
+  pte_t *pte = &pagetable[PX(2, va)];
+  if (*pte & PTE_V) {
+    pagetable = (pagetable_t)PTE2PA(*pte);
+  } else {
+    if ((pagetable = (pde_t *)kalloc()) == 0)
+      return 0;
+    memset(pagetable, 0, PGSIZE);
+    *pte = PA2PTE(pagetable) | PTE_V;
+  }
+  return &pagetable[PX(1, va)];
+}
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa.
 // va and size MUST be page-aligned.
@@ -181,6 +196,19 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
   a = va;
   last = va + size - PGSIZE;
   for (;;) {
+    if ((a % SUPERSIZE) == 0 && (pa % SUPERSIZE) == 0 &&
+        last - a + PGSIZE >= SUPERSIZE) {
+      if ((pte = walk2mb(pagetable, a)) == 0)
+        return -1;
+      if (*pte & PTE_V)
+        panic("mappages: remap");
+      *pte = PA2PTE(pa) | perm | PTE_V;
+      if (a + SUPERSIZE - PGSIZE == last)
+        break;
+      a += SUPERSIZE;
+      pa += SUPERSIZE;
+      continue;
+    }
     if ((pte = walk(pagetable, a, 1)) == 0)
       return -1;
     if (*pte & PTE_V)
