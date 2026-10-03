@@ -1,0 +1,12 @@
+Part 1: print_pgtbl
+
+va 0x0 (perm 0x5B = V R X U A): user text (code) page. Readable, executable, user-accessible, not writable.
+va 0x1000 (perm 0x1B = V R X U): second page of user text. Same permissions.
+va 0x2000 (perm 0x17 = V R W U): user data page. Readable and writable, not executable.
+va 0x3000 (perm 0x07 = V R W, no U): stack guard page. The U bit is cleared so user code faults if it touches it.
+va 0x4000 (perm 0xD7 = V R W U A D): user stack page. It has been read and written, so A and D are set.
+va 0x5000 - 0x9000 (pte 0): invalid, not mapped. Unallocated space above the process memory.
+va 0x3FFFFF6000 - 0x3FFFFFD000 (pte 0): invalid, not mapped. Unused pages at the top of the address space (0x3FFFFFD000 is where USYSCALL goes).
+va 0x3FFFFFE000 (perm 0xC7 = V R W A D, no U): the trapframe page. The kernel uses it to save user registers on traps. Not user-accessible.
+va 0x3FFFFFF000 (perm 0x4B = V R X A, no U): the trampoline page. Kernel code for entering and leaving user mode. Executable but not user-accessible.
+
