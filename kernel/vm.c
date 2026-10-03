@@ -577,6 +577,11 @@ vmprint_walk(pagetable_t pagetable, int level, uint64 va_prefix)
       printk("%p: pte %p pa %p", (void*)va, (void*)pte, (void*)pa);
 
       if(pte & (PTE_R | PTE_W | PTE_X)){
+        printk(" ");
+        if(pte & PTE_R) printk("R");
+        if(pte & PTE_W) printk("W");
+        if(pte & PTE_X) printk("X");
+        if(pte & PTE_U) printk("U");
         printk("\n");
       } else {
         printk("\n");
