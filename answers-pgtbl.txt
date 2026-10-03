@@ -10,3 +10,16 @@ va 0x3FFFFF6000 - 0x3FFFFFD000 (pte 0): invalid, not mapped. Unused pages at the
 va 0x3FFFFFE000 (perm 0xC7 = V R W A D, no U): the trapframe page. The kernel uses it to save user registers on traps. Not user-accessible.
 va 0x3FFFFFF000 (perm 0x4B = V R X A, no U): the trampoline page. Kernel code for entering and leaving user mode. Executable but not user-accessible.
 
+
+Part 2: Speed up system calls
+
+Another system call that could use the shared page is uptime(): the kernel would update a tick counter in the shared page on each timer tick, and user code would just read it. getppid() could work the same way by storing the parent's pid in the page. Any call that only reads kernel data the process can't change could avoid a kernel crossing.
+
+Part 3: vmprint
+
+The leaf entries are the same pages as in print_pgtbl, with the same PTE values:
+0x0 and 0x1000 (R X U): user text. 0x2000 (R W U): user data. 0x3000 (R W, no U): stack guard page. 0x4000 (R W U): user stack.
+0x3fffffd000 (R U): the USYSCALL read-only shared page.
+0x3fffffe000 (R W, no U): the trapframe.
+0x3ffffff000 (R X, no U): the trampoline.
+The non-leaf entries (no R/W/X bits) point to the next-level page-table pages.
