@@ -1,0 +1,14 @@
+1. The registers a0 through a7 contain function arguments. In main's call to printf, register a2 contains 13.
+
+2. There is no explicit call to f or g in main's assembly. The compiler optimizes the function calls, calculating f(8) + 1 as 12 directly.
+
+3. The function printf is located at address 0x6fe.
+
+4. The value in register ra just after the call to printf is 0x34, the address of the instruction immediately after the call.
+
+5. The output is:
+   He110 World
+
+6. On a big-endian RISC-V system, i would be 0x726c6400. The value 57616 does not need to change because it is printed as a hexadecimal number independently of the string's byte order.
+
+7. The value printed after y= is unpredictable because only one argument is supplied for two format specifiers. printf attempts to read a second argument that was not provided, resulting in undefined behavior.

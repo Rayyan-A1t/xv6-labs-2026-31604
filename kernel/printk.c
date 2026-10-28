@@ -140,6 +140,7 @@ panic(char *s)
   panicking = 1;
   printk("panic: ");
   printk("%s\n", s);
+  backtrace();
   panicked = 1; // freeze uart output from other CPUs
   for (;;)
     ;
@@ -149,4 +150,20 @@ void
 printkinit(void)
 {
   initlock(&pr.lock, "pr");
+}
+void
+backtrace(void)
+{
+  uint64 fp = r_fp();
+
+  printk("backtrace:");
+  while (PGROUNDDOWN(fp) == PGROUNDDOWN(r_fp())) {
+    uint64 ra = *(uint64 *)(fp - 8);
+    printk(" %p", (void *)ra);
+    uint64 prev_fp = *(uint64 *)(fp - 16);
+    if (prev_fp <= fp)
+      break;
+    fp = prev_fp;
+  }
+  printk("\n");
 }
